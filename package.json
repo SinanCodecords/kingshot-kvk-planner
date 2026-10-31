@@ -1,30 +1,35 @@
 {
-  "name": "kingshot-kvk-planner",
-  "version": "1.0.0",
+  "name": "kingshot-tools",
+  "version": "0.1.0",
   "private": true,
-  "description": "KvK appointment sign-up and scheduling for Kingshot alliances",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
-  },
-  "engines": {
-    "node": ">=20"
+    "lint": "eslint"
   },
   "dependencies": {
-    "next": "^15.5.28",
-    "postgres": "^3.4.7",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "server-only": "^0.0.1"
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "convex": "1.49.0",
+    "lucide-react": "^1.66.0",
+    "next": "16.4.3",
+    "radix-ui": "^1.8.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sonner": "^2.0.8",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@types/node": "^22.20.5",
-    "@types/react": "^19.1.12",
-    "@types/react-dom": "^19.1.9",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
-  }
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "^4",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@10.28.0"
 }
