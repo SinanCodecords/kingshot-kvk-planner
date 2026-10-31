@@ -24,6 +24,7 @@ export function ConfirmButton({
   onConfirm,
   size,
   variant = "destructive",
+  className,
 }: {
   children: ReactNode;
   title: string;
@@ -33,6 +34,7 @@ export function ConfirmButton({
   onConfirm: () => Promise<unknown> | void;
   size?: "default" | "sm" | "xs" | "icon-sm";
   variant?: "destructive" | "outline" | "ghost";
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -54,6 +56,7 @@ export function ConfirmButton({
         type="button"
         variant={variant}
         size={size}
+        className={className}
         onClick={() => {
           setTyped("");
           setOpen(true);

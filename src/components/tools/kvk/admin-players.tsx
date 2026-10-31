@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { Trash2 } from "lucide-react";
+import { FileSpreadsheet, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,7 +77,8 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => copyText(csv(), "CSV copied")} disabled={players.length === 0}>
+        <Button variant="outline" className="h-10" onClick={() => copyText(csv(), "CSV copied")} disabled={players.length === 0}>
+          <FileSpreadsheet data-icon="inline-start" />
           Copy as CSV
         </Button>
         <ConfirmButton
@@ -85,8 +86,10 @@ export function AdminPlayers({ password, data }: { password: string; data: Dashb
           description="Deletes every player and every turn, reopens sign-ups and hides the schedule. This cannot be undone."
           actionLabel="Wipe and start over"
           confirmWord="RESET"
+          className="h-10"
           onConfirm={() => run(() => resetEvent({ password, confirm: "RESET" }), "New KvK started.")}
         >
+          <RotateCcw data-icon="inline-start" />
           Start a new KvK
         </ConfirmButton>
       </div>

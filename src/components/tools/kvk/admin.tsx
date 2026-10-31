@@ -3,6 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
+import { CalendarCheck, Copy, KeyRound, LogOut, Users, type LucideIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -16,6 +17,7 @@ import { copyText, errorMessage, useStoredString } from "@/lib/client";
 import { DAYS, DAY_KEYS, SLOTS } from "@/lib/kvk";
 import { AdminDay } from "./admin-day";
 import { AdminPlayers } from "./admin-players";
+import { KvkNav } from "./kvk-nav";
 
 export type Dashboard = NonNullable<FunctionReturnType<typeof api.kvk.admin.dashboard>>;
 
@@ -24,9 +26,11 @@ export function KvkAdmin() {
 
   return (
     <>
-      <PageHeader title="KvK admin" description="Run sign-ups, assign turns and publish the schedule.">
+      <KvkNav />
+      <PageHeader eyebrow="Admin" title="KvK control room" description="Run sign-ups, assign turns and publish the schedule.">
         {password && (
           <Button variant="outline" onClick={() => setPassword(null)}>
+            <LogOut data-icon="inline-start" />
             Log out
           </Button>
         )}
@@ -59,9 +63,12 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
   };
 
   return (
-    <Card className="max-w-md">
-      <CardHeader>
-        <CardTitle>Admin login</CardTitle>
+    <Card className="mx-auto w-full max-w-md">
+      <CardHeader className="items-center text-center">
+        <span className="mx-auto mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+          <KeyRound className="size-6" />
+        </span>
+        <CardTitle className="text-xl">Admin login</CardTitle>
         <CardDescription>Enter the admin password set in Convex (ADMIN_PASSWORD).</CardDescription>
       </CardHeader>
       <CardContent>
@@ -75,9 +82,9 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => void }) {
             autoComplete="current-password"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="h-10"
+            className="h-11"
           />
-          <Button type="submit" size="lg" className="h-10" disabled={!value || busy}>
+          <Button type="submit" className="h-11 text-base" disabled={!value || busy}>
             Log in
           </Button>
         </form>
@@ -106,24 +113,31 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
   return (
     <>
       <SettingsCard password={password} data={data} />
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label="Players signed up" value={data.players.length} />
-        {DAY_KEYS.map((day) => (
-          <Stat
-            key={day}
-            label={`${DAYS[day].label} turns filled`}
-            value={`${data.turns.filter((t) => t.day === day).length}/${SLOTS.length}`}
-          />
-        ))}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Stat icon={Users} label="Players signed up" value={data.players.length} />
+        {DAY_KEYS.map((day) => {
+          const filled = data.turns.filter((t) => t.day === day).length;
+          return (
+            <Stat
+              key={day}
+              icon={CalendarCheck}
+              label={`${DAYS[day].label} · ${DAYS[day].position}`}
+              value={`${filled}/${SLOTS.length}`}
+              progress={filled / SLOTS.length}
+            />
+          );
+        })}
       </div>
       <Tabs defaultValue="d1">
-        <TabsList className="w-full sm:w-auto">
+        <TabsList className="w-full">
           {DAY_KEYS.map((day) => (
-            <TabsTrigger key={day} value={day}>
+            <TabsTrigger key={day} value={day} className="flex-1">
               {DAYS[day].label}
             </TabsTrigger>
           ))}
-          <TabsTrigger value="players">All players</TabsTrigger>
+          <TabsTrigger value="players" className="flex-1">
+            All players
+          </TabsTrigger>
         </TabsList>
         {DAY_KEYS.map((day) => (
           <TabsContent key={day} value={day} className="mt-4">
@@ -138,12 +152,32 @@ function AdminDashboard({ password, onLogout }: { password: string; onLogout: ()
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  progress,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string | number;
+  progress?: number;
+}) {
   return (
     <Card size="sm">
-      <CardContent className="flex flex-col gap-1">
-        <span className="text-xl font-semibold sm:text-2xl">{value}</span>
-        <span className="text-xs text-muted-foreground">{label}</span>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground">{label}</span>
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Icon className="size-4" />
+          </span>
+        </div>
+        <span className="font-mono text-2xl font-bold">{value}</span>
+        {progress !== undefined && (
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress * 100}%` }} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -179,13 +213,19 @@ function SettingsCard({ password, data }: { password: string; data: Dashboard })
         >
           <Label htmlFor="event-name">Event name</Label>
           <div className="flex gap-2">
-            <Input id="event-name" maxLength={60} value={eventName} onChange={(e) => setEventName(e.target.value)} />
-            <Button type="submit" variant="outline" disabled={eventName.trim() === data.settings.eventName}>
+            <Input
+              id="event-name"
+              maxLength={60}
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              className="h-10"
+            />
+            <Button type="submit" variant="outline" className="h-10" disabled={eventName.trim() === data.settings.eventName}>
               Save
             </Button>
           </div>
         </form>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col divide-y rounded-lg border">
           <Toggle
             id="submissions-open"
             label="Sign-ups open"
@@ -201,11 +241,13 @@ function SettingsCard({ password, data }: { password: string; data: Dashboard })
             onChange={(v) => run({ schedulePublished: v }, v ? "Schedule published." : "Schedule hidden.")}
           />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => copyText(link("/kvk"), "Player link copied")}>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button variant="outline" className="h-10" onClick={() => copyText(link("/kvk"), "Player link copied")}>
+            <Copy data-icon="inline-start" />
             Copy player link
           </Button>
-          <Button variant="outline" onClick={() => copyText(link("/kvk/schedule"), "Schedule link copied")}>
+          <Button variant="outline" className="h-10" onClick={() => copyText(link("/kvk/schedule"), "Schedule link copied")}>
+            <Copy data-icon="inline-start" />
             Copy schedule link
           </Button>
         </div>
@@ -228,7 +270,7 @@ function Toggle({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex items-center justify-between gap-4 px-4 py-3">
       <div className="flex flex-col gap-0.5">
         <Label htmlFor={id}>{label}</Label>
         <span className="text-xs text-muted-foreground">{hint}</span>

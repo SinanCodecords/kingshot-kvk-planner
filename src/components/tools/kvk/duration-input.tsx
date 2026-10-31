@@ -45,6 +45,7 @@ export function DurationInput({
               value={parts[p.key] || ""}
               placeholder="0"
               onChange={(e) => update(p.key, e.target.value)}
+              className="h-10 font-mono"
             />
             <Label htmlFor={`${id}-${p.key}`} className="text-xs font-normal text-muted-foreground">
               {p.label}

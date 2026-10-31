@@ -2,12 +2,12 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
-import Link from "next/link";
+import { CalendarClock, Lock, LogOut, Swords } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ import {
   type DayKey,
 } from "@/lib/kvk";
 import { DurationInput } from "./duration-input";
+import { KvkNav } from "./kvk-nav";
 import { SlotGrid } from "./slot-grid";
 
 type Entry = {
@@ -68,13 +69,17 @@ export function KvkSignup() {
 
   return (
     <>
+      <KvkNav />
       <PageHeader
-        title={settings?.eventName ? `${settings.eventName} sign-up` : "KvK sign-up"}
-        description="Enter your speedups and the times you can play. Most speedups get turns first."
+        eyebrow={settings?.eventName ?? "KvK"}
+        title="Appointment sign-up"
+        description="Enter your speedups and the times you can play. The most speedups get turns first."
       >
-        <Link href="/kvk/schedule" className={buttonVariants({ variant: "outline" })}>
-          View schedule
-        </Link>
+        {settings && (
+          <Badge variant={settings.submissionsOpen ? "success" : "secondary"}>
+            {settings.submissionsOpen ? "Sign-ups open" : "Sign-ups closed"}
+          </Badge>
+        )}
       </PageHeader>
       {gameId === undefined ? null : gameId ? (
         <PlayerArea gameId={gameId} onSwitch={() => setGameId(null)} submissionsOpen={settings?.submissionsOpen} />
@@ -92,15 +97,16 @@ function LoginCard({ onLogin }: { onLogin: (gameId: string) => void }) {
     if (value.trim()) onLogin(value.trim());
   };
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Log in with your game ID</CardTitle>
-        <CardDescription>
-          No password needed. Use the same ID later to edit your entry.
-        </CardDescription>
+    <Card className="mx-auto w-full max-w-md">
+      <CardHeader className="items-center text-center">
+        <span className="mx-auto mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+          <Swords className="size-6" />
+        </span>
+        <CardTitle className="text-xl">Enter your game ID</CardTitle>
+        <CardDescription>No password needed. Use the same ID later to edit your entry or see your turn.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row">
+        <form onSubmit={submit} className="flex flex-col gap-3">
           <Label htmlFor="game-id" className="sr-only">
             Game ID
           </Label>
@@ -108,12 +114,12 @@ function LoginCard({ onLogin }: { onLogin: (gameId: string) => void }) {
             id="game-id"
             inputMode="numeric"
             autoComplete="off"
-            placeholder="Your game ID"
+            placeholder="Game ID"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="h-10"
+            className="h-12 text-center font-mono text-lg tracking-wider"
           />
-          <Button type="submit" size="lg" className="h-10" disabled={!value.trim()}>
+          <Button type="submit" className="h-11 text-base" disabled={!value.trim()}>
             Continue
           </Button>
         </form>
@@ -133,28 +139,41 @@ function PlayerArea({
 }) {
   const entry = useQuery(api.kvk.players.get, { gameId });
   const turns = useQuery(api.kvk.players.myTurns, { gameId });
+  const initials = (entry?.name || "?").slice(0, 2).toUpperCase();
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm">
-        <span>
-          Game ID <span className="font-mono font-medium">{gameId}</span>
-          {entry && <Badge variant="secondary" className="ml-2">Signed up</Badge>}
-        </span>
-        <Button variant="ghost" size="sm" onClick={onSwitch}>
-          Switch ID
-        </Button>
-      </div>
+      <Card size="sm">
+        <CardContent className="flex items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+            {initials}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold">
+              {entry ? (entry.alliance ? `[${entry.alliance}] ${entry.name}` : entry.name) : "New player"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              ID <span className="font-mono">{gameId}</span>
+              {entry && <span className="text-success"> · Signed up</span>}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onSwitch}>
+            <LogOut data-icon="inline-start" />
+            Switch
+          </Button>
+        </CardContent>
+      </Card>
 
       {turns && entry && <MyTurns turns={turns} entry={entry} />}
 
       {submissionsOpen === false && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign-ups are closed</CardTitle>
-            <CardDescription>You can no longer change your entry. Ask your King or R4 if something is wrong.</CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
+          <Lock className="mt-0.5 size-4 shrink-0 text-warning" />
+          <div>
+            <p className="font-medium">Sign-ups are closed</p>
+            <p className="text-muted-foreground">You can no longer change your entry. Ask your King or R4 if something is wrong.</p>
+          </div>
+        </div>
       )}
 
       {entry !== undefined && submissionsOpen !== undefined && (
@@ -167,30 +186,35 @@ function PlayerArea({
 function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; entry: Entry }) {
   const today = useToday();
   return (
-    <Card>
+    <Card className="ring-primary/40">
       <CardHeader>
-        <CardTitle>Your turns</CardTitle>
-        <CardDescription>The schedule is published. Be online for your turn.</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <CalendarClock className="size-5 text-primary" />
+          Your turns
+        </CardTitle>
+        <CardDescription>The schedule is out. Be online at the start of your turn.</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="grid gap-3 sm:grid-cols-2">
         {DAY_KEYS.map((day) => {
           const mine = turns.filter((t) => t.day === day);
           const signedUp = (day === "d1" ? entry.d1Slots : entry.d4Slots).length > 0;
           return (
-            <div key={day} className="flex flex-col gap-1">
-              <p className="text-sm font-medium">
+            <div key={day} className="flex flex-col gap-1 rounded-lg bg-muted p-3">
+              <p className="text-xs font-medium text-muted-foreground">
                 {DAYS[day].label} · {DAYS[day].position}
               </p>
               {mine.length > 0 ? (
                 mine.map((t) => (
-                  <p key={t.slot} className="text-sm">
-                    <span className="font-mono font-semibold">{slotRangeUtc(t.slot)} UTC</span>
-                    {today && <span className="text-muted-foreground"> · {formatSlotLocal(t.slot, today)} your time</span>}
-                  </p>
+                  <div key={t.slot}>
+                    <p className="font-mono text-xl font-bold text-primary">{slotRangeUtc(t.slot)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      UTC{today && ` · ${formatSlotLocal(t.slot, today)} your time`}
+                    </p>
+                  </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  {signedUp ? "No turn — you are on the waitlist." : "You did not pick any times for this day."}
+                <p className="text-sm">
+                  {signedUp ? "No turn yet — you're on the waitlist." : "You didn't pick any times for this day."}
                 </p>
               )}
             </div>
@@ -233,7 +257,7 @@ function SignupForm({
     setSaving(true);
     try {
       const res = await save({ gameId, ...form });
-      toast.success(res.created ? "You're signed up!" : "Your entry was updated.");
+      toast.success(res.created ? "You're signed up" : "Entry updated");
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -245,7 +269,7 @@ function SignupForm({
     <form onSubmit={submit} className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>{isNew ? "Your details" : "Edit your entry"}</CardTitle>
+          <StepTitle step={1} title={isNew ? "Your details" : "Edit your details"} />
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-[2fr_1fr]">
           <div className="flex flex-col gap-2">
@@ -255,8 +279,10 @@ function SignupForm({
               required
               maxLength={40}
               disabled={disabled}
+              placeholder="Your name in Kingshot"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
+              className="h-10"
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -265,44 +291,47 @@ function SignupForm({
               id="alliance"
               maxLength={10}
               disabled={disabled}
-              placeholder="e.g. ABC"
+              placeholder="ABC"
               value={form.alliance}
               onChange={(e) => set("alliance", e.target.value)}
+              className="h-10 uppercase"
             />
           </div>
         </CardContent>
       </Card>
 
-      {DAY_KEYS.map((day) => {
+      {DAY_KEYS.map((day, i) => {
         const total = SPEEDUP_FIELDS[day].reduce((sum, f) => sum + (form[f.key] as number), 0);
         const slotsKey = day === "d1" ? "d1Slots" : "d4Slots";
         return (
           <Card key={day}>
             <CardHeader>
-              <CardTitle>
-                {DAYS[day].label} · {DAYS[day].title}
-              </CardTitle>
-              <CardDescription>
-                Appointment: {DAYS[day].position}. Leave empty if you are not playing this day.
+              <StepTitle step={i + 2} title={`${DAYS[day].label} · ${DAYS[day].title}`} />
+              <CardDescription className="pl-10">
+                Appointment: <span className="font-medium text-foreground">{DAYS[day].position}</span>. Skip if you
+                won&apos;t play this day.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              {SPEEDUP_FIELDS[day].map((f) => (
-                <DurationInput
-                  key={f.key}
-                  id={f.key}
-                  label={f.label}
-                  value={form[f.key] as number}
-                  disabled={disabled}
-                  onChange={(minutes) => set(f.key, minutes)}
-                />
-              ))}
-              <p className="text-sm">
-                Total for {DAYS[day].label}: <span className="font-semibold">{formatDuration(total)}</span>
-              </p>
+            <CardContent className="flex flex-col gap-6">
+              <div className="flex flex-col gap-5">
+                {SPEEDUP_FIELDS[day].map((f) => (
+                  <DurationInput
+                    key={f.key}
+                    id={f.key}
+                    label={f.label}
+                    value={form[f.key] as number}
+                    disabled={disabled}
+                    onChange={(minutes) => set(f.key, minutes)}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-primary/10 px-4 py-3">
+                <span className="text-sm font-medium">{DAYS[day].label} total</span>
+                <span className="font-mono text-xl font-bold text-primary">{formatDuration(total)}</span>
+              </div>
               <Separator />
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">Times you can play</p>
+                <p className="font-medium">Times you can play</p>
                 <p className="text-xs text-muted-foreground">
                   Pick every turn you can be online for. Big numbers are UTC
                   {today ? `, small numbers are your time (${localTimeZone()})` : ""}.
@@ -315,12 +344,23 @@ function SignupForm({
       })}
 
       {!disabled && (
-        <div className="sticky bottom-0 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
-          <Button type="submit" size="lg" className="h-11 w-full sm:w-auto" disabled={saving}>
+        <div className="sticky bottom-0 -mx-4 border-t bg-background/90 px-4 py-3 backdrop-blur-md sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+          <Button type="submit" className="h-12 w-full text-base sm:w-auto sm:px-8" disabled={saving}>
             {saving ? "Saving…" : isNew ? "Sign up" : "Save changes"}
           </Button>
         </div>
       )}
     </form>
+  );
+}
+
+function StepTitle({ step, title }: { step: number; title: string }) {
+  return (
+    <CardTitle className="flex items-center gap-3 text-base">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+        {step}
+      </span>
+      {title}
+    </CardTitle>
   );
 }

@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation } from "convex/react";
-import { Lock, LockOpen } from "lucide-react";
+import { ClipboardCopy, Lock, LockOpen, Sparkles, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import {
   useToday,
   type DayKey,
 } from "@/lib/kvk";
+import { cn } from "@/lib/utils";
 import type { Dashboard } from "./admin";
 import { ConfirmButton } from "./confirm-button";
 
@@ -92,19 +93,23 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={runAutoAssign} disabled={assigning}>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <Button className="col-span-2 h-10 sm:col-span-1" onClick={runAutoAssign} disabled={assigning}>
+          <Sparkles data-icon="inline-start" />
           {assigning ? "Assigning…" : "Auto-assign"}
         </Button>
-        <Button variant="outline" onClick={() => copyText(chatText(), "Schedule copied for alliance chat")}>
-          Copy schedule for chat
+        <Button variant="outline" className="h-10" onClick={() => copyText(chatText(), "Schedule copied for alliance chat")}>
+          <ClipboardCopy data-icon="inline-start" />
+          Copy for chat
         </Button>
         <ConfirmButton
           title={`Clear ${DAYS[day].label}?`}
           description="Removes every turn on this day, including locked ones. Players stay signed up."
           actionLabel="Clear day"
+          className="h-10"
           onConfirm={() => run(() => clearDay({ password, day }), `${DAYS[day].label} cleared.`)}
         >
+          <Trash2 data-icon="inline-start" />
           Clear day
         </ConfirmButton>
       </div>
@@ -122,8 +127,8 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
             <TableHeader>
               <TableRow>
                 <TableHead>Time (UTC)</TableHead>
-                <TableHead className="min-w-56">Player</TableHead>
-                <TableHead>Speedups</TableHead>
+                <TableHead className="w-full min-w-36">Player</TableHead>
+                <TableHead className="hidden sm:table-cell">Speedups</TableHead>
                 <TableHead className="w-12">Lock</TableHead>
               </TableRow>
             </TableHeader>
@@ -132,9 +137,9 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                 const turn = bySlot.get(slot);
                 const player = turn && byId.get(turn.gameId);
                 return (
-                  <TableRow key={slot}>
+                  <TableRow key={slot} className={cn(turn?.locked && "bg-primary/5")}>
                     <TableCell>
-                      <div className="font-mono">{slotRangeUtc(slot)}</div>
+                      <div className="font-mono font-semibold">{slotRangeUtc(slot)}</div>
                       {today && <div className="text-xs text-muted-foreground">{formatSlotLocal(slot, today)}</div>}
                     </TableCell>
                     <TableCell>
@@ -157,11 +162,11 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell>{player ? formatDuration(dayScore(player, day)) : "—"}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{player ? formatDuration(dayScore(player, day)) : "—"}</TableCell>
                     <TableCell>
                       {turn && (
                         <Button
-                          variant={turn.locked ? "secondary" : "ghost"}
+                          variant={turn.locked ? "default" : "ghost"}
                           size="icon-sm"
                           aria-label={turn.locked ? "Unlock turn" : "Lock turn"}
                           onClick={() => run(() => setLocked({ password, day, slot, locked: !turn.locked }))}
@@ -201,15 +206,15 @@ export function AdminDay({ password, day, data }: { password: string; day: DayKe
                 const slot = turnOf.get(r.player.gameId);
                 return (
                   <TableRow key={r.player.gameId}>
-                    <TableCell>{i + 1}</TableCell>
+                    <TableCell className="font-mono text-muted-foreground">{i + 1}</TableCell>
                     <TableCell>{playerLabel(r.player)}</TableCell>
                     <TableCell>{formatDuration(r.score)}</TableCell>
                     <TableCell>{r.slots.length}</TableCell>
                     <TableCell>
                       {slot !== undefined ? (
-                        <Badge>Has turn · {slotUtc(slot)}</Badge>
+                        <Badge variant="success">Has turn · {slotUtc(slot)}</Badge>
                       ) : (
-                        <Badge variant="outline">Waiting</Badge>
+                        <Badge variant="warning">Waiting</Badge>
                       )}
                     </TableCell>
                   </TableRow>
