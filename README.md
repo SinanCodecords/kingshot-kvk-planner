@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kingshot Tools
 
-## Getting Started
+Web tools for our Kingshot alliance. Next.js (App Router) + Tailwind + shadcn/ui, with Convex for the database and server functions.
 
-First, run the development server:
+## Tools
+
+| Tool | Player page | Admin |
+| --- | --- | --- |
+| KvK Appointment Planner | `/kvk` (sign-up), `/kvk/schedule` (public schedule) | `/admin/kvk` |
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm convex dev   # keeps Convex functions in sync, writes .env.local
+pnpm dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Set the admin password on the Convex deployment (dashboard → Settings → Environment Variables, or):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm convex env set ADMIN_PASSWORD 'your-password'
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Layout
 
-## Learn More
+- `src/lib/tools.ts` — tools registry shown on the home page
+- `src/app/<tool>/` — routes for each tool
+- `src/components/tools/<tool>/` — UI for each tool
+- `convex/<tool>/` — Convex functions for each tool; `convex/schema.ts` holds all tables
+- `convex/lib/kvk.ts` — ranking and auto-assign logic (shared with the browser)
 
-To learn more about Next.js, take a look at the following resources:
+To add a tool: add an entry to `src/lib/tools.ts`, a route folder under `src/app/`, its components, and its Convex functions.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploying (Vercel)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. In the Convex dashboard, generate a Production deploy key and add it to Vercel as `CONVEX_DEPLOY_KEY`.
+2. Set the Vercel build command to `pnpm convex deploy --cmd 'pnpm build'`.
+3. `pnpm convex env set --prod ADMIN_PASSWORD 'your-password'`.
