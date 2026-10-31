@@ -190,7 +190,7 @@ function MyTurns({ turns, entry }: { turns: { day: DayKey; slot: number }[]; ent
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {signedUp ? "No turn — you are on the waitlist." : "You did not sign up for this day."}
+                  {signedUp ? "No turn — you are on the waitlist." : "You did not pick any times for this day."}
                 </p>
               )}
             </div>
